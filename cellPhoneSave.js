@@ -10,12 +10,13 @@ var detailsSchema=new Schema({
 });
 //var userData=mongoose.model('phones',detailsSchema);
 const phones = module.exports = mongoose.model('phones', detailsSchema);
-exports.saveData = function (item) { // making saveData acessible by  outside world
+
+module.exports.saveData = function (item) { // making saveData acessible by  outside world
        var data=new phones(item);
        var promise = data.save();
        return promise;
 }
-exports.closeConnection= function () { //closing connection
+module.exports.closeConnection = function () { //closing connection
    mongoose.connection.close();
    console.log("mongo db closed");
 }

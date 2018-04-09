@@ -9,13 +9,13 @@ var allDetails=[];
 //var START_URL = "http://www.arstechnica.com";
 var START_URL = "https://www.walmart.com/cp/5595429";
 var SEARCH_WORD = "";
-var MAX_PAGES_TO_VISIT = 50;
+var MAX_PAGES_TO_VISIT = 10;
 
 var pagesVisited = {};
 var numPagesVisited = 0;
 var pagesToVisit = [ "https://www.walmart.com/cp/5595429",
                      "https://www.walmart.com/browse/cell-phones/unlocked-phones/1105910_1073085?cat_id=1105910_1073085&facet=brand:Apple",
-                     "https://www.walmart.com/browse/cell-phones/unlocked-phones/samsung/1105910_1073085/YnJhbmQ6U2Ftc3VuZwieie?_refineresult=true",
+                    "https://www.walmart.com/browse/cell-phones/unlocked-phones/samsung/1105910_1073085/YnJhbmQ6U2Ftc3VuZwieie?_refineresult=true",
                      "https://www.walmart.com/browse/cell-phones/unlocked-phones/1105910_1073085?cat_id=1105910_1073085&facet=brand:BLU",
                      "https://www.walmart.com/browse/cell-phones/unlocked-phones/lg/1105910_1073085/YnJhbmQ6TEcie?_refineresult=true",
                      "https://www.walmart.com/browse/cell-phones/unlocked-phones/motorola/1105910_1073085/YnJhbmQ6TW90b3JvbGEie?cat_id=1105910_1073085&facet=brand:Motorola",
@@ -99,44 +99,45 @@ function collectInternalLinks($) {
 function collectAllLinks($) {
     var relativeLinks = $("a[href^='/']");
     //console.log("Found " + relativeLinks.length + "links on page");
-    relativeLinks.each(function() {
-      var lnk= $(this).attr('href').toLowerCase();
+    $('a').each(function() {
+      var lnk= $(this).attr('href');
       if(lnk==null){
          return;
       }
+      lnk =lnk.toLowerCase()
       var arr=lnk.split("/");
-      var validi =  lnk.includes("apple")||lnk.includes("motorola")||lnk.includes("lg")||lnk.includes("blu")||lnk.includes("samsung");
-      //console.log(lnk);
-      //console.log(validi);
-     
+      var validi = lnk.includes("cell-phones")|| lnk.includes("apple")||lnk.includes("motorola")||lnk.includes("lg")||lnk.includes("blu")||lnk.includes("samsung");
+      validi = validi || lnk.includes("htc")|| lnk.includes("sony")||lnk.includes("huawei")||lnk.includes("nokia");
+      validi = validi || lnk.includes("alcatel")|| lnk.includes("zte")||lnk.includes("asus");
+      console.log(lnk);
+      if(lnk.startsWith("/")){
          lnk =baseUrl+lnk;
          var indx = pagesVisited[lnk];
-         if (!indx) {
-             if(validi){
+         if (!indx && validi) {
              // console.log("pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp");
-                  pagesToVisit.push(baseUrl + $(this).attr('href')); 
-             }        
+             pagesToVisit.push(baseUrl + $(this).attr('href')); 
+                  
          }    
      var indx = links.indexOf(lnk);
       if (indx<0){
-        if(validi && arr.length===4){
+       if(validi && arr.length===4){
            links.push(lnk);
            
         }
         
       }
-      
+     } 
     });
+     console.log(links.length);
 }
 function printUrls(){
-    console.log(links.length);
+   console.log(links.length);
    console.log(links);
-   // mongoS.closeConnection();
 }
 function scrapeAllPhones(){
   for (var i = 0; i <=links.length-1; i++) {
        var url = links[i];
-        isLastPage= i === links.length-1;
+        isLastPage = i === links.length-1;
         //console.log(isLastPage);
         scrapeCellPhone(url,scrapeAllPhones); 
     } 
@@ -147,28 +148,33 @@ function scrapeCellPhone(url,callback) {
      if(isLastPage) {
          Promise.all(allPromises).then(function(values) {
             console.log("all request are completed");
-           console.log(allDetails);
+            console.log(allDetails.length);
+            console.log(allDetails);
         });
         
-         // console.log("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk");
-           Promise.all(dbPromises).then(function(values) {
-               mongoS.closeConnection(); // closing connection after all data is saved
-          });
+         // console.log("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk");     
      }
     requestPag.then(function(body) {
         var $ = cheerio.load(body);
-        var brand = $(".ProductTitle h1").text();
-        var model = $("a.prod-BrandName span").text();
+        var model= $(".ProductTitle h1").text();
+        var brand  = $("a.prod-BrandName span").text();
         var price = $("span.Price-group").first().attr('title');
+        if(brand && model && price && url){
         var item ={
           url : url,
           brand:brand,
           model:model,
           price :price
-       }
+        }
        var proms= mongoS.saveData(item);// saving json to mongodb 
        dbPromises.push(proms);
+       if(isLastPage) {
+           Promise.all(dbPromises).then(function(values) {
+               mongoS.closeConnection(); // closing connection after all data is saved
+          });
+        }   
        allDetails.push(item);
+     }
     }, function(err) {
       console.log(err);              
     })
