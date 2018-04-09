@@ -9,7 +9,7 @@ var allDetails=[];
 //var START_URL = "http://www.arstechnica.com";
 var START_URL = "https://www.walmart.com/cp/5595429";
 var SEARCH_WORD = "";
-var MAX_PAGES_TO_VISIT = 10;
+var MAX_PAGES_TO_VISIT = 1000;
 
 var pagesVisited = {};
 var numPagesVisited = 0;
