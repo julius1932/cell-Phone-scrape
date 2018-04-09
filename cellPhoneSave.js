@@ -18,7 +18,7 @@ module.exports.saveData = function (item) { // making saveData acessible by  out
 }
 module.exports.closeConnection = function () { //closing connection
    mongoose.connection.close();
-   console.log("mongo db closed");
+   //console.log("mongo db closed");
 }
 
 

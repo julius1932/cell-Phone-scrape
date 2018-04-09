@@ -9,7 +9,7 @@ var allDetails=[];
 //var START_URL = "http://www.arstechnica.com";
 var START_URL = "https://www.walmart.com/cp/5595429";
 var SEARCH_WORD = "";
-var MAX_PAGES_TO_VISIT = 1000;
+var MAX_PAGES_TO_VISIT = 100;
 
 var pagesVisited = {};
 var numPagesVisited = 0;
@@ -145,15 +145,6 @@ function scrapeAllPhones(){
 function scrapeCellPhone(url,callback) {
     var requestPag = requestPage(url,callback);
     allPromises.push(requestPag);
-     if(isLastPage) {
-         Promise.all(allPromises).then(function(values) {
-            console.log("all request are completed");
-            console.log(allDetails.length);
-            console.log(allDetails);
-        });
-        
-         // console.log("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk");     
-     }
     requestPag.then(function(body) {
         var $ = cheerio.load(body);
         var model= $(".ProductTitle h1").text();
@@ -169,9 +160,14 @@ function scrapeCellPhone(url,callback) {
        var proms= mongoS.saveData(item);// saving json to mongodb 
        dbPromises.push(proms);
        if(isLastPage) {
+        Promise.all(allPromises).then(function(values) {
+            console.log("all request are completed");
+            console.log(allDetails.length);
+            console.log(allDetails);        
+          });
            Promise.all(dbPromises).then(function(values) {
                mongoS.closeConnection(); // closing connection after all data is saved
-          });
+             });
         }   
        allDetails.push(item);
      }
