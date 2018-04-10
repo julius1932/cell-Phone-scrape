@@ -9,7 +9,7 @@ var allDetails=[];
 //var START_URL = "http://www.arstechnica.com";
 var START_URL = "https://www.walmart.com/cp/5595429";
 var SEARCH_WORD = "";
-var MAX_PAGES_TO_VISIT = 100;
+//var MAX_PAGES_TO_VISIT = 1000;
 
 var pagesVisited = {};
 var numPagesVisited = 0;
@@ -28,11 +28,15 @@ var isLastPage=false;
 //pagesToVisit.push(START_URL);
 crawl();
 function crawl() {
-  if(pagesToVisit.length<=0 || numPagesVisited>= MAX_PAGES_TO_VISIT) {
+  if(pagesToVisit.length<=0 ) {
     console.log("visited all pages.");
     Promise.all(promisez).then(function(values) {
        printUrls();
-       scrapeAllPhones();
+    });
+    Promise.all(dbPromises).then(function(values) {
+       console.log(allDetails.length);
+        console.log(allDetails);
+       mongoS.closeConnection(); // closing connection after all data is saved
     });
     return;
   }
@@ -71,6 +75,7 @@ function visitPage(url, callback) {
   promisez.push(requestPag);
   requestPag.then(function(body) {
     var $ = cheerio.load(body);
+    scrapeCellPhone($);
     collectAllLinks($);
     callback();
   }, function(err) {
@@ -109,17 +114,21 @@ function collectAllLinks($) {
       var validi = lnk.includes("cell-phones")|| lnk.includes("apple")||lnk.includes("motorola")||lnk.includes("lg")||lnk.includes("blu")||lnk.includes("samsung");
       validi = validi || lnk.includes("htc")|| lnk.includes("sony")||lnk.includes("huawei")||lnk.includes("nokia");
       validi = validi || lnk.includes("alcatel")|| lnk.includes("zte")||lnk.includes("asus");
-      console.log(lnk);
+      //console.log(lnk);
       if(lnk.startsWith("/")){
          lnk =baseUrl+lnk;
-         var indx = pagesVisited[lnk];
-         if (!indx && validi) {
+         if (lnk in pagesVisited) {}
+             else {
+                if ( validi) {
              // console.log("pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp");
              pagesToVisit.push(baseUrl + $(this).attr('href')); 
                   
          }    
+      }
+         
      var indx = links.indexOf(lnk);
-      if (indx<0){
+      if (lnk in links){    
+      }else{
        if(validi && arr.length===4){
            links.push(lnk);
            
@@ -128,29 +137,19 @@ function collectAllLinks($) {
       }
      } 
     });
-     console.log(links.length);
+     //console.log(links.length +" promising links  so far");
+     console.log(allDetails.length +" Items scraped and saved  so far");
+     console.log(pagesToVisit.length+" pages to visit  ");
 }
 function printUrls(){
    console.log(links.length);
-   console.log(links);
 }
-function scrapeAllPhones(){
-  for (var i = 0; i <=links.length-1; i++) {
-       var url = links[i];
-        isLastPage = i === links.length-1;
-        //console.log(isLastPage);
-        scrapeCellPhone(url,scrapeAllPhones); 
-    } 
-  }
-function scrapeCellPhone(url,callback) {
-    var requestPag = requestPage(url,callback);
-    allPromises.push(requestPag);
-    requestPag.then(function(body) {
-        var $ = cheerio.load(body);
-        var model= $(".ProductTitle h1").text();
-        var brand  = $("a.prod-BrandName span").text();
-        var price = $("span.Price-group").first().attr('title');
-        if(brand && model && price && url){
+
+function scrapeCellPhone($) {
+    var model= $(".ProductTitle h1").text();
+    var brand  = $("a.prod-BrandName span").text();
+    var price = $("span.Price-group").first().attr('title');
+    if(brand && model && price && url){
         var item ={
           url : url,
           brand:brand,
@@ -159,19 +158,6 @@ function scrapeCellPhone(url,callback) {
         }
        var proms= mongoS.saveData(item);// saving json to mongodb 
        dbPromises.push(proms);
-       if(isLastPage) {
-        Promise.all(allPromises).then(function(values) {
-            console.log("all request are completed");
-            console.log(allDetails.length);
-            console.log(allDetails);        
-          });
-           Promise.all(dbPromises).then(function(values) {
-               mongoS.closeConnection(); // closing connection after all data is saved
-             });
         }   
        allDetails.push(item);
      }
-    }, function(err) {
-      console.log(err);              
-    })
-}
