@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cell Phones</title>
+    <style>
+th,td {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+tr:nth-child(even){background-color: #f2f2f2;}
+
+tr:hover {background-color: #ddd;}
+
+th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #4CAF50;
+    color: white;
+}
+ </style>
+</head>
+<body>
+  <h1>Cell Phones from rest api</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>URL</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
+    <script>
+    $(function() {
+    // GET/READ
+    //alert("response");
+        $.ajax({
+            url: 'http://localhost:8080/phone',
+            dataType: 'jsonp',
+            success: function(data) {
+                var tbodyEl = $('tbody');
+                //alert("uuuuuuuuuuuuuuuuuuuu");
+                //alert(data.length);
+                tbodyEl.html('');
+               $.each(data, function(index, element) {
+                    tbodyEl.append('\
+                        <tr>\
+                            <td class="id"><a href="' + element.url + '">'+element.url+'</a></td>\
+                            <td class="id">' + element.brand + '</td>\
+                            <td class="id">' + element.model + '</td>\
+                            <td class="id">' + element.price + '</td>\
+                        </tr>\
+                    ');
+                });
+            }
+        });
+    }); 
+
+    </script>
+    
+</body>
+</html>

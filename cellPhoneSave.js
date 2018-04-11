@@ -21,9 +21,35 @@ module.exports.closeConnection = function () { //closing connection
    //console.log("mongo db closed");
 }
 
-
 // Get phones
 module.exports.getPhones = (callback, limit) => {
 	phones.find(callback).limit(limit);
 }
-
+// get Phone
+module.exports.getPhoneById = function(id, callback) {
+   phones.findById(id, callback);
+}
+// Add Phone
+module.exports.addPhone = function(cleanser, callback) {
+   phones.create(cleanser, callback);
+}
+// Update Phone
+module.exports.updatePhone = function(id, phone, options, callback) {
+   var query = {
+      _id: id
+   }
+   var update = {
+      url: phone.url,
+      brand: phone.brand,
+      model: phone.model,
+      price: phone.price
+   }
+   phones.findOneAndUpdate(query, update, options, callback);
+}
+// Delete phone
+module.exports.removePhone = function(id, callback) {
+   var query = {
+      _id: id
+   }
+   phones.remove(query, callback);
+}
